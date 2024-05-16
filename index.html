@@ -87,9 +87,13 @@
     .selected {
         background-color: #e7f4e4; /* Subtle light green background for selected text blocks */
     }
+    .header-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
 
 </style>
-<script src="image_data_two_models.js"></script>
+<script src="imageData_with_llava_cogvlm.js"></script>
 </head>
 <body>
     <form action="https://formspree.io/f/xyyrojnd" method="POST">
@@ -97,34 +101,69 @@
         <div id="tabContainer"></div>
     </form>
     <script>        
+
+        function shuffleTupleArray(array) {
+            // Create a copy of the array to avoid mutating the original array
+            console.log("shuffleTupleArray");
+            const shuffledArray = array.slice();
+            console.log(shuffledArray);
+            
+            for (let i = shuffledArray.length - 1; i > 0; i--) {
+                // Generate a random index between 0 and i
+                const j = Math.floor(Math.random() * (i + 1));
+                
+                // Swap elements at i and j
+                [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+            }
+            
+            console.log(shuffledArray);
+            return shuffledArray;
+        }
+
+        const tuples = [
+            ["llava", "cogvlm"], ["cogvlm", "llava"],
+            ["llava", "deepseek"], ["deepseek", "llava"],
+            ["cogvlm", "deepseek"], ["deepseek", "cogvlm"]
+        ];
+
+        const tabTitles = ["Composition", "Contrast", "Movement", "Rythm", "Proportion", "Focus Point"];
+        const tabQuestions = {
+                0: "Judge which <strong>text</strong> you find describes the <strong>composition</strong> of the painting the best.",
+                1: "Judge which <strong>text</strong> you find that bests describes the use of <strong>contrast</strong> in the painting.",
+                2: "Judge which <strong>text</strong> you find that bests describes the depiction of <strong>movement</strong> in the painting.",
+                3: "Judge which <strong>text</strong> you find best describing the depiction of <strong>rhythm</strong> in the painting.",
+                4: "Judge which <strong>text</strong> you find best describing the use of <strong>proportion</strong> in the painting.",
+                5: "Judge which <strong>text</strong> you find best describing the <strong>focus point</strong> of the painting.",
+            };
+        const tabData = {
+            0: "composition",
+            1: "contrast",
+            2: "movement",
+            3: "rhythm",
+            4: "proportion",
+            5: "focus_point",
+        };
+
         function createTabContent(tabIndex, items, last) {
             let tabContent = `<div class="tab" id="tab${tabIndex}">`;
+            tabContent += `<div class="header-container"><h2>${tabTitles[tabIndex]}</h2><p>${tabQuestions[tabIndex]}</p></div>`;
+            
+            console.log(tuples);
+            const shuffledTuples = shuffleTupleArray(tuples);
+
             items.forEach((item, index) => {
-                if (Math.random() > 0.5) {
-                    tabContent += `
-                        <div class="item">
-                            <div class="text-content" data-index="llava_${item["image_filename"]}" onclick="toggleSelection(event)">
-                                <span>${item["composition_llava"]}</span><br>
-                            </div>
-                            <img src="images/${item["image_filename"]}" alt="${item["image_filename"]}">
-                            <div class="text-content" data-index="cogvlm_${item["image_filename"]}" onclick="toggleSelection(event)">
-                                <span>${item["composition_cogvlm"]}</span><br>
-                            </div>
+                const [firstComposition, secondComposition] = shuffledTuples[index % shuffledTuples.length];
+                tabContent += `
+                    <div class="item">
+                        <div class="text-content" data-index="${firstComposition}_${item["image_filename"]}" onclick="toggleSelection(event)">
+                            <span>${item[`${firstComposition}_${tabData[tabIndex]}`]}</span><br>
                         </div>
-                    `;
-                } else {
-                    tabContent += `
-                        <div class="item">
-                            <div class="text-content" data-index="cogvlm_${item["image_filename"]}" onclick="toggleSelection(event)">
-                                <span>${item["composition_cogvlm"]}</span><br>
-                            </div>
-                            <img src="images/${item["image_filename"]}" alt="${item.name}">
-                            <div class="text-content" data-index="llava_${item["image_filename"]}" onclick="toggleSelection(event)">
-                                <span>${item["composition_llava"]}</span><br>
-                            </div>
+                        <img src="images/${item["image_filename"]}" alt="${item["image_filename"]}">
+                        <div class="text-content" data-index="${secondComposition}_${item["image_filename"]}" onclick="toggleSelection(event)">
+                            <span>${item[`${secondComposition}_${tabData[tabIndex]}`]}</span><br>
                         </div>
-                    `;
-                }
+                    </div>
+                `;
                 
             });
 
