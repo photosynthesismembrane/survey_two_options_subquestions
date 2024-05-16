@@ -98,16 +98,13 @@
 </head>
 <body>
     <form action="https://formspree.io/f/xyyrojnd" method="POST">
-        <input type="hidden" id="selectedIndices" name="selectedIndices" value="">
         <div id="tabContainer"></div>
     </form>
     <script>        
 
         function shuffleTupleArray(array) {
             // Create a copy of the array to avoid mutating the original array
-            console.log("shuffleTupleArray");
             const shuffledArray = array.slice();
-            console.log(shuffledArray);
             
             for (let i = shuffledArray.length - 1; i > 0; i--) {
                 // Generate a random index between 0 and i
@@ -117,7 +114,6 @@
                 [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
             }
             
-            console.log(shuffledArray);
             return shuffledArray;
         }
 
@@ -127,14 +123,14 @@
             ["cogvlm", "deepseek"], ["deepseek", "cogvlm"]
         ];
 
-        const tabTitles = ["Composition", "Contrast", "Movement", "Rythm", "Proportion", "Focus Point"];
+        const tabTitles = ["Composition", "Contrast", "Movement", "Rhythm", "Proportion", "Focus Point"];
         const tabQuestions = {
-                0: "Judge which <strong>text</strong> you find describes the <strong>composition</strong> of the painting the best.",
-                1: "Judge which <strong>text</strong> you find that bests describes the use of <strong>contrast</strong> in the painting.",
-                2: "Judge which <strong>text</strong> you find that bests describes the depiction of <strong>movement</strong> in the painting.",
-                3: "Judge which <strong>text</strong> you find best describing the depiction of <strong>rhythm</strong> in the painting.",
-                4: "Judge which <strong>text</strong> you find best describing the use of <strong>proportion</strong> in the painting.",
-                5: "Judge which <strong>text</strong> you find best describing the <strong>focus point</strong> of the painting.",
+                0: "Judge which <strong>text</strong> you find describes the <strong>composition</strong> of the painting the best. Click to select the most fitting description.",
+                1: "Judge which <strong>text</strong> you find that bests describes the use of <strong>contrast</strong> in the painting. Click to select the most fitting description.",
+                2: "Judge which <strong>text</strong> you find that bests describes the depiction of <strong>movement</strong> in the painting. Click to select the most fitting description.",
+                3: "Judge which <strong>text</strong> you find best describing the depiction of <strong>rhythm</strong> in the painting. Click to select the most fitting description.",
+                4: "Judge which <strong>text</strong> you find best describing the use of <strong>proportion</strong> in the painting. Click to select the most fitting description.",
+                5: "Judge which <strong>text</strong> you find best describing the <strong>focus point</strong> of the painting. Click to select the most fitting description.",
             };
         const tabData = {
             0: "composition",
@@ -149,18 +145,18 @@
             let tabContent = `<div class="tab" id="tab${tabIndex}">`;
             tabContent += `<div class="header-container"><h2>${tabTitles[tabIndex]}</h2><p>${tabQuestions[tabIndex]}</p></div>`;
             
-            console.log(tuples);
             const shuffledTuples = shuffleTupleArray(tuples);
 
             items.forEach((item, index) => {
                 const [firstComposition, secondComposition] = shuffledTuples[index % shuffledTuples.length];
                 tabContent += `
                     <div class="item">
-                        <div class="text-content" data-index="${firstComposition}_${item["image_filename"]}" onclick="toggleSelection(event)">
+                        <input type="hidden" name="${tabData[tabIndex]}_${item["image_filename"]}" value="">
+                        <div class="text-content" data-index="${firstComposition}" onclick="toggleSelection(event)">
                             <span>${item[`${firstComposition}_${tabData[tabIndex]}`]}</span><br>
                         </div>
                         <img src="images/${item["image_filename"]}" alt="${item["image_filename"]}">
-                        <div class="text-content" data-index="${secondComposition}_${item["image_filename"]}" onclick="toggleSelection(event)">
+                        <div class="text-content" data-index="${secondComposition}" onclick="toggleSelection(event)">
                             <span>${item[`${secondComposition}_${tabData[tabIndex]}`]}</span><br>
                         </div>
                     </div>
@@ -188,6 +184,7 @@
         function toggleSelection(event) {
             const textContent = event.currentTarget;
             const allTextContents = textContent.parentNode.querySelectorAll('.text-content');
+            const allInvisibleInputs = textContent.parentNode.querySelectorAll('input[type="hidden"]');
 
             // Check and deselect any other selected text-content in the same item
             allTextContents.forEach(block => {
@@ -196,16 +193,17 @@
                 }
             });
 
+            // Check and deselect any other selected text-content in the same item
+            allInvisibleInputs.forEach(input => {
+                input.value = "";
+            });
+
             // Toggle the selected class on the clicked text-content
             textContent.classList.add('selected');
 
-            // Update hidden input for form submission
-            const itemIndex = textContent.getAttribute('data-index');
-            const hiddenInput = document.getElementById('selectedIndices');
-            let selectedIndexArray = hiddenInput.value ? hiddenInput.value.split(',') : [];
-            selectedIndexArray = selectedIndexArray.filter(index => !index.startsWith(itemIndex.split('_')[0] + "_"));
-            selectedIndexArray.push(itemIndex);
-            hiddenInput.value = selectedIndexArray.join(',');
+            // Toggle the checked attribute on the clicked input
+            const input = textContent.parentNode.querySelector('input[type="hidden"]');
+            input.value = textContent.getAttribute('data-index');
 
             // Scroll logic: move to the next item
             let parentItem = textContent.closest('.item');
