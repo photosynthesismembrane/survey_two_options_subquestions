@@ -141,6 +141,29 @@
             5: "focus_point",
         };
 
+        function truncateText(text, maxChars) {
+            if (text.length <= maxChars) {
+                return text;
+            }
+
+            let truncated = text.substring(0, maxChars);
+
+            // Ensure we don't cut off in the middle of a sentence
+            const lastPeriodIndex = truncated.lastIndexOf('.');
+            const lastExclamationIndex = truncated.lastIndexOf('!');
+            const lastQuestionIndex = truncated.lastIndexOf('?');
+
+            const lastSentenceEnd = Math.max(lastPeriodIndex, lastExclamationIndex, lastQuestionIndex);
+
+            if (lastSentenceEnd > -1) {
+                truncated = truncated.substring(0, lastSentenceEnd + 1);
+            } else {
+                truncated = truncated.substring(0, truncated.lastIndexOf(' '));
+            }
+
+            return truncated.trim();
+        }
+
         function createTabContent(tabIndex, items, last) {
             let tabContent = `<div class="tab" id="tab${tabIndex}">`;
             tabContent += `<div class="header-container"><h2>${tabTitles[tabIndex]}</h2><p>${tabQuestions[tabIndex]}</p></div>`;
@@ -149,15 +172,19 @@
 
             items.forEach((item, index) => {
                 const [firstComposition, secondComposition] = shuffledTuples[index % shuffledTuples.length];
+
+                text_one = truncateText(item[`${firstComposition}_${tabData[tabIndex]}`], 1300);
+                text_two = truncateText(item[`${secondComposition}_${tabData[tabIndex]}`], 1300);
+
                 tabContent += `
                     <div class="item">
                         <input type="hidden" name="${tabData[tabIndex]}_${item["image_filename"]}" value="">
                         <div class="text-content" data-index="${firstComposition}" onclick="toggleSelection(event)">
-                            <span>${item[`${firstComposition}_${tabData[tabIndex]}`]}</span><br>
+                            <span>${text_one}</span><br>
                         </div>
                         <img src="images/${item["image_filename"]}" alt="${item["image_filename"]}">
                         <div class="text-content" data-index="${secondComposition}" onclick="toggleSelection(event)">
-                            <span>${item[`${secondComposition}_${tabData[tabIndex]}`]}</span><br>
+                            <span>${text_two}</span><br>
                         </div>
                     </div>
                 `;
